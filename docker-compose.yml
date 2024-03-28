@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  app:
+    restart: always
+    build: .
+    container_name: authme
+    ports:
+      - "8030:8030"
