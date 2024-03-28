@@ -24,11 +24,11 @@ def create_backup(name: str):
 
         if (parsed_backup_filename is not None):
             if (parsed_backup_filename["counter"] is not None):
-                print(f"Successfully created backup copy {name}!")
+                print(f"CREATED: {get_pretty_printed_backup_string(parsed_backup_filename)}")
             else:
-                print(f"Successfully created backup {name}!")
+                print(f"CREATED: {get_pretty_printed_backup_string(parsed_backup_filename)}")
         else:
-            print(f"Created backup {name} of unknown type?")
+            print(f"CREATED: BACKUP - {name} WITH UNKNOWN PROPERTIES")
 
 def get_current_time_string() -> str:
     """Gets the current time and date components, formatted into a string"""
@@ -95,14 +95,17 @@ def get_backup_list():
             backup_list.append(parsed_filename)
     return backup_list
 
+def get_pretty_printed_backup_string(parsed_filename: dict[str, str]) -> str:
+    if (parsed_filename["counter"] is not None):
+        return f'BACKUP - UPDATE #{parsed_filename["counter"]} OF {parsed_filename["backup_name"]}: CREATED ON {parsed_filename["publish_time"]}'
+    else:
+        return f'BACKUP - {parsed_filename["backup_name"]}: CREATED ON {parsed_filename["publish_time"]}'
+
 def list_backups():
     backup_list = get_backup_list()
     if (backup_list is not None):
         for parsed_filename in backup_list:
-            if (parsed_filename["counter"] is not None):
-                print(f'BACKUP - COPY {parsed_filename["counter"]} OF {parsed_filename["backup_name"]}: CREATED ON {parsed_filename["publish_time"]}')
-            else:
-                print(f'BACKUP - {parsed_filename["backup_name"]}: CREATED ON {parsed_filename["publish_time"]}')
+            print(get_pretty_printed_backup_string(parsed_filename))
     else:
         print("Failed to list the backups: Could not safely parse the backup filename!")
 
@@ -121,8 +124,6 @@ def remove_backup(backup_name: str, counter: str = None):
                         sorted_backup_list = [backup for backup in backup_list if backup["counter"] is not None]
                         sorted_backup_list = sorted(sorted_backup_list, key=lambda x: x.get("counter", 0))
 
-                        print(sorted_backup_list)
-
                         # Iteratively rename backups with higher counters to prevent extreme fuckery:
                         for subsequent_filename in sorted_backup_list:
                             if subsequent_filename["backup_name"] == backup_name and subsequent_filename["counter"] > int(counter):
@@ -132,6 +133,7 @@ def remove_backup(backup_name: str, counter: str = None):
                                 subsequent_filename["counter"] = new_counter
                                 subsequent_filename["original_filename"] = new_filename
                         
+                        print(f"DELETED: {get_pretty_printed_backup_string(parsed_filename)}")
                         return # Return early out of the loop, since there is nothing else to remove.
             else:
                 # The backup in question is not a copy, and the user is trying to delete the original backup.
